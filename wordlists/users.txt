@@ -1,1 +1,6 @@
-
+root
+admin
+msfadmin
+user
+test
+guest
