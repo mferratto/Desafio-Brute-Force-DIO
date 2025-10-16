@@ -1,6 +1,6 @@
 root
-password
-123456
 admin
 msfadmin
+user
 test
+guest
