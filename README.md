@@ -39,7 +39,9 @@ Todas as atividades documentadas neste projeto foram realizadas em um ambiente d
 
 1.  **Instalação:** As VMs do Kali Linux e Metasploitable 2 foram importadas para o VirtualBox.
 2.  **Rede:** Ambas as VMs foram configuradas para operar na mesma rede "host-only", garantindo comunicação entre elas e isolamento da rede externa.
-3.  **Identificação de IPs:**
+![Configuração Rede Kali Linux](images/config_rede_kali)
+![Configuração Rede Metasploitable](images/config_rede_meta)
+4.  **Identificação de IPs:**
     * IP do Kali Linux: `ip addr`
     * IP do Metasploitable 2: `ifconfig`
 
@@ -81,7 +83,7 @@ medusa -h <192.168.56.102> -U users.txt -P passwords.txt -M ftp -v 6
     Password: msfadmin
     ftp> ls
     ```
-    ![Print sucesso FTP](ftp_success.png)
+    ![Mensagem de sucesso na identificação das credenciais para acessp ao FTP](images/ftp_success)
 
 ### Cenário 2: Automação de Tentativas em Formulário Web (DVWA)
 
@@ -102,6 +104,7 @@ hydra -L users.txt -P passwords.txt 192.168.56.102 http-post-form "/dvwa/login.p
 ```
 
 * **Resultado:** Medusa encontrou as credenciais `admin:password`.
+  ![Mensagem de sucesso na identificação das credenciais para acesso em formulário WEB](images/dvwa_success)
 
 ### Cenário 3: Password Spraying em SMB (Metasploitable 2)
 
@@ -125,6 +128,7 @@ medusa -h 192.168.56.102 -U users.txt -P pass_spray.txt -M smbnt
     * `-M smbnt`: Módulo para o protocolo SMB.
 
 * **Resultado:** O comando validou que a senha `msfadmin` funciona para o usuário `msfadmin`, simulando um cenário onde uma senha padrão foi reutilizada.
+  ![Mensagem de sucesso na identificação das credenciais para acesso em formulário WEB](images/pass_spray_success)
 
 ---
 
