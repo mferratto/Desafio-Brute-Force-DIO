@@ -5,19 +5,23 @@
 Este repositório documenta a execução de um desafio prático de cibersegurança, focado na utilização da ferramenta **Medusa** em um ambiente de laboratório controlado para simular ataques de força bruta contra diferentes serviços.
 
 **Autor:** [mferratto]
-**Data:** [Data da Realização]
+**Data:** [05/11/2025]
 
 ---
 
 ### ⚠️ Aviso Ético
 
-Todas as atividades documentadas neste projeto foram realizadas em um ambiente de laboratório isolado e controlado (VMs em rede Host-Only), utilizando máquinas deliberadamente vulneráveis (`Metasploitable 2` e `DVWA`). O propósito deste estudo é estritamente educacional, visando a compreensão de vetores de ataque para o desenvolvimento de estratégias de defesa e mitigação. **Nunca realize estes testes em sistemas ou redes sem autorização explícita e legal.**
+Todas as atividades documentadas neste projeto foram realizadas em um ambiente de laboratório isolado e controlado (VMs em rede host-only), utilizando máquinas deliberadamente vulneráveis (`Metasploitable 2` e `DVWA`). O propósito deste estudo é estritamente educacional, visando a compreensão de vetores de ataque para o desenvolvimento de estratégias de defesa e mitigação. **Nunca realize estes testes em sistemas ou redes sem autorização explícita e legal.**
 
 ---
 
 ## 1. Objetivo do Projeto
 
-Implementar, documentar e compartilhar um projeto prático utilizando **Kali Linux** e a ferramenta **Medusa** para simular cenários de ataque de força bruta contra os ambientes vulneráveis **Metasploitable 2** e **DVWA**, e propor medidas de prevenção eficazes.
+•	Compreender ataques de força bruta em diferentes serviços (FTP, Web, SMB);
+•	Utilizar o Kali Linux e o Medusa para auditoria de segurança em ambiente controlado;
+•	Documentar processos técnicos de forma clara e estruturada;
+•	Reconhecer vulnerabilidades comuns e propor medidas de mitigação;
+•	Utilizar o GitHub como portfólio técnico para compartilhar documentação e evidências.
 
 ---
 
@@ -27,23 +31,23 @@ Implementar, documentar e compartilhar um projeto prático utilizando **Kali Lin
 | :--- | :--- |
 | **Virtualizador** | Oracle VM VirtualBox |
 | **Máquina Atacante** | Kali Linux (VM) |
-| **Máquinas Alvo** | Metasploitable 2 (VM), DVWA (via Docker ou XAMPP) |
-| **Configuração de Rede** | Rede Interna (Host-Only) para isolamento |
+| **Máquinas Alvo** | Metasploitable 2 (VM) e DVWA |
+| **Configuração de Rede** | Rede Interna (Host-only) para isolamento |
 | **Ferramenta Principal** | Medusa (ferramenta de brute force) |
 
 ### Configuração do Ambiente
 
 1.  **Instalação:** As VMs do Kali Linux e Metasploitable 2 foram importadas para o VirtualBox.
-2.  **Rede:** Ambas as VMs foram configuradas para operar na mesma rede "Host-Only", garantindo comunicação entre elas e isolamento da rede externa.
+2.  **Rede:** Ambas as VMs foram configuradas para operar na mesma rede "host-only", garantindo comunicação entre elas e isolamento da rede externa.
 3.  **Identificação de IPs:**
-    * IP do Kali Linux: `ip a`
+    * IP do Kali Linux: `ip addr`
     * IP do Metasploitable 2: `ifconfig`
 
 ---
 
 ## 3. Execução dos Ataques Simulados
 
-Para os testes, foram utilizadas as wordlists `users.txt` e `passwords.txt` disponíveis na pasta `/wordlists` deste repositório.
+Para os testes, foram utilizadas as wordlists `users.txt`, `passwords.txt` e `pass_spray.txt` disponíveis na pasta `/wordlists` deste repositório.
 
 ### Cenário 1: Ataque de Força Bruta ao Serviço FTP (Metasploitable 2)
 
@@ -53,7 +57,12 @@ O serviço FTP (porta 21) do Metasploitable 2 é notoriamente inseguro e um alvo
 * **Comando Executado:**
 
 ```bash
-medusa -h <IP_DO_METASPLOITABLE_2> -U wordlists/users.txt -P wordlists/passwords.txt -M ftp -v 6
+nmap -p 21,80,445 192.168.56.102
+```
+Verificou-se que as portas 21 (FTP), 80 (HTTP/DVWA) e 445 (SMB) estão abertas, então prosseguimos.
+
+```bash
+medusa -h <192.168.56.102> -U users.txt -P passwords.txt -M ftp -v 6
 ```
 
 * **Explicação dos Parâmetros:**
@@ -67,12 +76,12 @@ medusa -h <IP_DO_METASPLOITABLE_2> -U wordlists/users.txt -P wordlists/passwords
 
 * **Validação:** O acesso foi validado utilizando o cliente FTP padrão do Kali:
     ```bash
-    ftp <IP_DO_METASPLOITABLE_2>
+    ftp 192.168.56.102
     Name: msfadmin
     Password: msfadmin
     ftp> ls
     ```
-    ![Exemplo de Sucesso FTP](images/1-ftp-success.png)
+    ![Print sucesso FTP](ftp_success.png)
 
 ### Cenário 2: Automação de Tentativas em Formulário Web (DVWA)
 
@@ -82,16 +91,15 @@ O DVWA (Damn Vulnerable Web Application) possui uma página de brute force que s
     1.  Acessar o DVWA pelo navegador no Kali Linux.
     2.  Fazer login com as credenciais padrão (`admin:password`).
     3.  Acessar a aba "DVWA Security" e definir o nível de segurança como **`low`**.
-    4.  Navegar para a página "Brute Force".
+    4.  Fazer logout.
 
-* **Análise do Formulário:** Utilizando as ferramentas de desenvolvedor do navegador (F12), inspecionamos o formulário para identificar os nomes dos campos (`username`, `password`) e o método (`GET`). Também identificamos um campo oculto `user_token` que precisa ser incluído na requisição.
+* **Análise do Formulário:** Utilizando as ferramentas de desenvolvedor do navegador (F12), inspecionamos o formulário para identificar os nomes dos campos (`username`, `password`) e o método (`POST`).
 
 * **Comando Executado:**
 
 ```bash
-medusa -h <IP_DO_DVWA> -U wordlists/users.txt -P wordlists/passwords.txt -M web-form -m FORM:"/vulnerabilities/brute/index.php" -m GET_FORM_VARS:"username=%USER%&password=%PASS%&Login=Login&user_token=<?php echo $_SESSION['user_token']; ?>" -v 6
+hydra -L users.txt -P passwords.txt 192.168.56.102 http-post-form "/dvwa/login.php:username=^USER^&password=^PASS^&Login=Login:Login failed" -v 6
 ```
-*Atualização: Em níveis baixos do DVWA, o `user_token` pode ser estático ou ausente. Se o comando acima falhar, uma versão simplificada pode ser usada, capturando o token da sessão ou omitindo-o se a lógica do servidor permitir.*
 
 * **Resultado:** Medusa encontrou as credenciais `admin:password`.
 
@@ -99,21 +107,21 @@ medusa -h <IP_DO_DVWA> -U wordlists/users.txt -P wordlists/passwords.txt -M web-
 
 Diferente do brute force, o *password spraying* utiliza uma ou poucas senhas comuns contra uma lista extensa de usuários, evitando o bloqueio de contas.
 
-* **Enumeração de Usuários (Opcional):** Antes do ataque, ferramentas como `enum4linux` podem ser usadas para obter uma lista de usuários válidos do serviço SMB.
+* **Enumeração de Usuários:** Antes do ataque, a ferramenta `enum4linux` foi utilizada para obter uma lista de usuários válidos do serviço SMB. Nota: optou-se por utilizar uma lista exemplificativa mais simples.
     ```bash
-    enum4linux -a <IP_DO_METASPLOITABLE_2>
+    enum4linux -a 192.168.56.102
     ```
 
 * **Alvo:** Serviço Samba (SMB) no Metasploitable 2.
 * **Comando Executado:**
 
 ```bash
-medusa -h <IP_DO_METASPLOITABLE_2> -U wordlists/users.txt -p 'msfadmin' -M smbnt
+medusa -h 192.168.56.102 -U users.txt -P pass_spray.txt -M smbnt
 ```
 
 * **Explicação dos Parâmetros:**
     * `-U`: Lista de usuários a serem testados.
-    * `-p`: Uma **única senha** (`-p` minúsculo) a ser testada contra todos os usuários.
+    * `-P`: Uma **única senha** salva no arquivo a ser testada contra todos os usuários.
     * `-M smbnt`: Módulo para o protocolo SMB.
 
 * **Resultado:** O comando validou que a senha `msfadmin` funciona para o usuário `msfadmin`, simulando um cenário onde uma senha padrão foi reutilizada.
