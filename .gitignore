@@ -1,0 +1,12 @@
+# Arquivos de ambiente
+.env
+
+# Logs
+*.log
+
+# Arquivos de configuração local
+config.ini
+
+# Credenciais
+secrets.txt
+*.key
